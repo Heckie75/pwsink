@@ -326,7 +326,7 @@ def print_list() -> None:
 def print_json() -> None:
 
     all_devices = dict()
-    all_devices["sinks"] = [s.to_ddict() for s in Sink.get_pipewire_sinks()]
+    all_devices["sinks"] = [s.to_dict() for s in Sink.get_pipewire_sinks()]
     all_devices["bluez"] = [b.to_dict()
                             for b in BluetoothDevice.get_bluetooth_devices()]
 
