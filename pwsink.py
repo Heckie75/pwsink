@@ -220,7 +220,7 @@ class Sink():
 
         if LOGGER.level == LOGGER.DEBUG:
             LOGGER.debug(
-                f"Current known sinks are: {", ".join(str(s) for s in known_sinks)}")
+                f"Current known sinks are: {', '.join(str(s) for s in known_sinks)}")
 
         return known_sinks
 

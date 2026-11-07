@@ -1,6 +1,6 @@
-# pwsink - Pipewire-Sink-Setter with Bluetooth support
+# pwsink - Audio Sink Setter with Bluetooth support
 
-`pwsink` is a command-line tool that simplifies switching audio sinks. It supports both ALSA devices and Bluetooth audio sinks, automatically connecting to previously paired Bluetooth devices for seamless audio output redirection.
+`pwsink.py` switches Linux PipeWire audio sinks, including ALSA and Bluetooth devices. `winsink.py` provides a separate Windows command-line tool for listing and switching Windows audio outputs, including Bluetooth devices.
 
 ```
 usage: pwsink.py [-h] [-l] [-s name of sink, mac-address or shortcut] [-c name of sink, mac-address or shortcut] [-d] [-j]
@@ -22,13 +22,99 @@ options:
 
 Internally, `pwsink` leverages the following tools:
 
-1.  **`bluez`**: This suite provides the fundamental Bluetooth tools and daemons. Specifically, `pwsink` utilizes the `bluetoothctl` command to:
+1.  **Python 3.6 or newer**: Required to run either script.
+
+The following tools are required for Linux `pwsink.py` only:
+
+2.  **`bluez`**: This suite provides the fundamental Bluetooth tools and daemons. Specifically, `pwsink.py` utilizes the `bluetoothctl` command to:
     * List already paired A2DP Bluetooth devices.
     * Connect to these devices by either their name or MAC address.
 
-2.  **`pw-dump`**: The PipeWire state dumper, used by `pwsink`.
+3.  **`pw-dump`**: The PipeWire state dumper, used by `pwsink`.
 
-3.  **`wpctl`**: The PipeWire control command-line interface, also employed by `pwsink`.
+4.  **`wpctl`**: The PipeWire control command-line interface, also employed by `pwsink`.
+
+Windows `winsink.py` uses the built-in Windows Core Audio APIs through Python's `ctypes`; it does not require PipeWire, BlueZ, or additional Python packages. Pair Bluetooth devices in Windows before using the script.
+
+## Windows
+
+Run these commands from PowerShell or Command Prompt with Python installed.
+
+### List outputs
+
+```powershell
+python winsink.py
+Windows audio outputs:
+  Lautsprecher (Realtek(R) Audio) | {0.0.0.00000000}.{7acbc977-1f99-4d33-9cc1-181735429404} | default: False
+  Lautsprecher (Wohnzimmer) | {0.0.0.00000000}.{a89f2a67-3946-4019-8ebc-cb0247f1013c} | default: True
+
+Paired Bluetooth audio devices:
+  Jabra Evolve 75 | be1f4e81-852b-5b83-82fc-236d1189b7e2 | connected: False
+  Jabra Evolve2 75 | 2dd4efce-5128-53ca-8431-5b6463d70a5a | connected: False
+  Wohnzimmer | 6b073096-53f8-54a5-b143-e8ca0bd91b92 | connected: True
+```
+
+The output includes each active audio output's name and endpoint ID, whether it is the default, and detected Bluetooth audio devices. Use the displayed name or ID to select an output. Names must match exactly (case-insensitive); use the ID if a name is ambiguous.
+
+### Set the default output
+
+```powershell
+py winsink.py --sink "Speakers"
+py winsink.py --sink "<endpoint ID>"
+```
+
+For Bluetooth devices that are not active, the script requests a reconnection and retries. Set the number of connection attempts with `--retry` (default: `1`):
+
+```powershell
+py winsink.py --sink "Headphones" --retry 3
+```
+
+### JSON output and logging
+
+```powershell
+python winsink.py -j
+{
+  "sinks": [
+    {
+      "id": "{0.0.0.00000000}.{7acbc977-1f99-4d33-9cc1-181735429404}",
+      "name": "Lautsprecher (Realtek(R) Audio)",
+      "address": null,
+      "default": false
+    },
+    {
+      "id": "{0.0.0.00000000}.{a89f2a67-3946-4019-8ebc-cb0247f1013c}",
+      "name": "Lautsprecher (Wohnzimmer)",
+      "address": "6b073096-53f8-54a5-b143-e8ca0bd91b92",
+      "default": true
+    }
+  ],
+  "bluetooth": [
+    {
+      "id": "be1f4e81-852b-5b83-82fc-236d1189b7e2",
+      "name": "Jabra Evolve 75",
+      "connected": false
+    },
+    {
+      "id": "2dd4efce-5128-53ca-8431-5b6463d70a5a",
+      "name": "Jabra Evolve2 75",
+      "connected": false
+    },
+    {
+      "id": "6b073096-53f8-54a5-b143-e8ca0bd91b92",
+      "name": "Wohnzimmer",
+      "connected": true
+    }
+  ]
+}
+```
+
+For debug logging:
+
+```powershell
+py winsink.py --list --log DEBUG
+```
+
+The JSON output contains `sinks` and `bluetooth` arrays. Log levels are `DEBUG`, `INFO`, `WARN`, and `ERROR`.
 
 ## Examples
 
